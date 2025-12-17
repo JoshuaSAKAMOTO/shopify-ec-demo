@@ -4,7 +4,7 @@ A headless e-commerce demo built with Next.js and Shopify Storefront API.
 
 ## Prerequisites
 
-- **Node.js**: v22.20.0 (use [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) for version management)
+- **Node.js**: v24.12.0 (use [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) for version management)
 - **npm**: v10.x or later
 - **Git**: Latest version
 
@@ -71,7 +71,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Before starting development, verify:
 
-- [ ] Node.js version matches `.nvmrc` (`node -v` should show `v22.20.0`)
+- [ ] Node.js version matches `.nvmrc` (`node -v` should show `v24.12.0`)
 - [ ] All dependencies installed without errors (`npm install`)
 - [ ] `.env.local` file created with valid credentials
 - [ ] Development server starts without errors (`npm run dev`)
@@ -121,7 +121,7 @@ If port 3000 is occupied, Next.js will automatically use another port (e.g., 300
 ### Node version mismatch
 
 ```bash
-fnm install 22.20.0   # or: nvm install 22.20.0
+fnm install 24.12.0   # or: nvm install 24.12.0
 fnm use               # or: nvm use
 ```
 
