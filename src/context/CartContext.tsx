@@ -9,7 +9,7 @@ import {
   useTransition,
   ReactNode,
 } from "react";
-import { Cart } from "@/lib/shopify";
+import { Cart } from "@/lib/shopify-types";
 import {
   addItemToCart,
   updateItemQuantity,
