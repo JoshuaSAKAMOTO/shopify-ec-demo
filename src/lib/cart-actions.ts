@@ -7,7 +7,9 @@ import {
   addToCart,
   updateCartLines,
   removeFromCart,
+  searchProducts as searchProductsApi,
   Cart,
+  ShopifyProduct,
 } from "./shopify";
 
 const CART_COOKIE_NAME = "shopify_cart_id";
@@ -75,4 +77,12 @@ export async function getCurrentCart(): Promise<Cart | null> {
   if (!cartId) return null;
 
   return getCart(cartId);
+}
+
+// Search action
+export async function searchProducts(
+  query: string,
+  first: number = 6
+): Promise<ShopifyProduct[]> {
+  return searchProductsApi(query, first);
 }

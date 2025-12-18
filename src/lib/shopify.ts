@@ -1,5 +1,25 @@
 import { createStorefrontApiClient } from "@shopify/storefront-api-client";
 
+// Re-export types for convenience (server-side imports)
+export type {
+  ShopifyImage,
+  ShopifyPrice,
+  ShopifyProduct,
+  ShopifyCollectionListItem,
+  ShopifyCollection,
+  CartLine,
+  Cart,
+} from "./shopify-types";
+export { formatPrice } from "./shopify-types";
+
+// Import types for internal use
+import type {
+  ShopifyProduct,
+  ShopifyCollectionListItem,
+  ShopifyCollection,
+  Cart,
+} from "./shopify-types";
+
 const domain = process.env.SHOPIFY_STORE_DOMAIN!;
 const accessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 
@@ -8,71 +28,6 @@ export const shopifyClient = createStorefrontApiClient({
   apiVersion: "2025-01",
   publicAccessToken: accessToken,
 });
-
-// Types
-export interface ShopifyImage {
-  url: string;
-  altText: string | null;
-  width: number;
-  height: number;
-}
-
-export interface ShopifyPrice {
-  amount: string;
-  currencyCode: string;
-}
-
-export interface ShopifyProduct {
-  id: string;
-  handle: string;
-  title: string;
-  description: string;
-  descriptionHtml: string;
-  featuredImage: ShopifyImage | null;
-  images: {
-    nodes: ShopifyImage[];
-  };
-  priceRange: {
-    minVariantPrice: ShopifyPrice;
-    maxVariantPrice: ShopifyPrice;
-  };
-  compareAtPriceRange: {
-    minVariantPrice: ShopifyPrice;
-    maxVariantPrice: ShopifyPrice;
-  };
-  variants: {
-    nodes: {
-      id: string;
-      title: string;
-      price: ShopifyPrice;
-      compareAtPrice: ShopifyPrice | null;
-      availableForSale: boolean;
-      selectedOptions: {
-        name: string;
-        value: string;
-      }[];
-    }[];
-  };
-  options: {
-    name: string;
-    values: string[];
-  }[];
-  tags: string[];
-}
-
-export interface ShopifyCollectionListItem {
-  id: string;
-  handle: string;
-  title: string;
-  description: string;
-  image: ShopifyImage | null;
-}
-
-export interface ShopifyCollection extends ShopifyCollectionListItem {
-  products: {
-    nodes: ShopifyProduct[];
-  };
-}
 
 // Fragments
 const PRODUCT_FRAGMENT = `
@@ -275,49 +230,6 @@ export async function getCollectionByHandle(handle: string, productCount: number
   }
 
   return data?.collection || null;
-}
-
-// Helper: Format price
-export function formatPrice(price: ShopifyPrice): string {
-  const amount = parseFloat(price.amount);
-  return new Intl.NumberFormat("ja-JP", {
-    style: "currency",
-    currency: price.currencyCode,
-  }).format(amount);
-}
-
-// Cart Types
-export interface CartLine {
-  id: string;
-  quantity: number;
-  merchandise: {
-    id: string;
-    title: string;
-    product: {
-      id: string;
-      title: string;
-      handle: string;
-      featuredImage: ShopifyImage | null;
-    };
-    price: ShopifyPrice;
-  };
-  cost: {
-    totalAmount: ShopifyPrice;
-  };
-}
-
-export interface Cart {
-  id: string;
-  checkoutUrl: string;
-  totalQuantity: number;
-  cost: {
-    subtotalAmount: ShopifyPrice;
-    totalAmount: ShopifyPrice;
-    totalTaxAmount: ShopifyPrice | null;
-  };
-  lines: {
-    nodes: CartLine[];
-  };
 }
 
 // Cart Fragment

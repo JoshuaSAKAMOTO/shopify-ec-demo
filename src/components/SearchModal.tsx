@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { searchProducts, formatPrice, ShopifyProduct } from "@/lib/shopify";
+import { searchProducts } from "@/lib/cart-actions";
+import { formatPrice, ShopifyProduct } from "@/lib/shopify-types";
 
 interface SearchModalProps {
   isOpen: boolean;

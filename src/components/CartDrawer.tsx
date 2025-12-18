@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/shopify";
+import { formatPrice } from "@/lib/shopify-types";
 import Image from "next/image";
 import Link from "next/link";
 
