@@ -73,7 +73,7 @@ export default function Header() {
 
             {/* Account - Links to Shopify account page */}
             <a
-              href={`https://${process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN}/account`}
+              href="https://shopify.com/65886421105/account"
               aria-label="Account"
               className="p-1 hover:text-accent transition-colors"
             >
