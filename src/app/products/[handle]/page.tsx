@@ -85,6 +85,13 @@ export default async function ProductPage({ params }: PageProps) {
   );
   const sizes = sizeOption?.values || [];
 
+  // Transform variants for cart functionality
+  const variants = product.variants.nodes.map((v) => ({
+    id: v.id,
+    title: v.title,
+    availableForSale: v.availableForSale,
+  }));
+
   // Calculate discount percentage
   const currentPrice = parseFloat(product.priceRange.minVariantPrice.amount);
   const compareAtPrice = parseFloat(product.compareAtPriceRange.minVariantPrice.amount);
@@ -141,6 +148,7 @@ export default async function ProductPage({ params }: PageProps) {
                 discountPercentage={discountPercentage}
                 description={product.description || ""}
                 sizes={sizes}
+                variants={variants}
               />
             </div>
           </div>

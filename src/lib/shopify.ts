@@ -285,3 +285,279 @@ export function formatPrice(price: ShopifyPrice): string {
     currency: price.currencyCode,
   }).format(amount);
 }
+
+// Cart Types
+export interface CartLine {
+  id: string;
+  quantity: number;
+  merchandise: {
+    id: string;
+    title: string;
+    product: {
+      id: string;
+      title: string;
+      handle: string;
+      featuredImage: ShopifyImage | null;
+    };
+    price: ShopifyPrice;
+  };
+  cost: {
+    totalAmount: ShopifyPrice;
+  };
+}
+
+export interface Cart {
+  id: string;
+  checkoutUrl: string;
+  totalQuantity: number;
+  cost: {
+    subtotalAmount: ShopifyPrice;
+    totalAmount: ShopifyPrice;
+    totalTaxAmount: ShopifyPrice | null;
+  };
+  lines: {
+    nodes: CartLine[];
+  };
+}
+
+// Cart Fragment
+const CART_FRAGMENT = `
+  fragment CartFields on Cart {
+    id
+    checkoutUrl
+    totalQuantity
+    cost {
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+      totalAmount {
+        amount
+        currencyCode
+      }
+      totalTaxAmount {
+        amount
+        currencyCode
+      }
+    }
+    lines(first: 100) {
+      nodes {
+        id
+        quantity
+        merchandise {
+          ... on ProductVariant {
+            id
+            title
+            product {
+              id
+              title
+              handle
+              featuredImage {
+                url
+                altText
+                width
+                height
+              }
+            }
+            price {
+              amount
+              currencyCode
+            }
+          }
+        }
+        cost {
+          totalAmount {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Create a new cart
+export async function createCart(): Promise<Cart> {
+  const mutation = `
+    ${CART_FRAGMENT}
+    mutation CreateCart {
+      cartCreate {
+        cart {
+          ...CartFields
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(mutation);
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to create cart");
+  }
+
+  if (data?.cartCreate?.userErrors?.length > 0) {
+    throw new Error(data.cartCreate.userErrors[0].message);
+  }
+
+  return data?.cartCreate?.cart;
+}
+
+// Get cart by ID
+export async function getCart(cartId: string): Promise<Cart | null> {
+  const query = `
+    ${CART_FRAGMENT}
+    query GetCart($cartId: ID!) {
+      cart(id: $cartId) {
+        ...CartFields
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(query, {
+    variables: { cartId },
+  });
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to fetch cart");
+  }
+
+  return data?.cart || null;
+}
+
+// Add items to cart
+export async function addToCart(
+  cartId: string,
+  lines: { merchandiseId: string; quantity: number }[]
+): Promise<Cart> {
+  const mutation = `
+    ${CART_FRAGMENT}
+    mutation AddToCart($cartId: ID!, $lines: [CartLineInput!]!) {
+      cartLinesAdd(cartId: $cartId, lines: $lines) {
+        cart {
+          ...CartFields
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(mutation, {
+    variables: { cartId, lines },
+  });
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to add to cart");
+  }
+
+  if (data?.cartLinesAdd?.userErrors?.length > 0) {
+    throw new Error(data.cartLinesAdd.userErrors[0].message);
+  }
+
+  return data?.cartLinesAdd?.cart;
+}
+
+// Update cart line quantities
+export async function updateCartLines(
+  cartId: string,
+  lines: { id: string; quantity: number }[]
+): Promise<Cart> {
+  const mutation = `
+    ${CART_FRAGMENT}
+    mutation UpdateCartLines($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+      cartLinesUpdate(cartId: $cartId, lines: $lines) {
+        cart {
+          ...CartFields
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(mutation, {
+    variables: { cartId, lines },
+  });
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to update cart");
+  }
+
+  if (data?.cartLinesUpdate?.userErrors?.length > 0) {
+    throw new Error(data.cartLinesUpdate.userErrors[0].message);
+  }
+
+  return data?.cartLinesUpdate?.cart;
+}
+
+// Remove items from cart
+export async function removeFromCart(
+  cartId: string,
+  lineIds: string[]
+): Promise<Cart> {
+  const mutation = `
+    ${CART_FRAGMENT}
+    mutation RemoveFromCart($cartId: ID!, $lineIds: [ID!]!) {
+      cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+        cart {
+          ...CartFields
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(mutation, {
+    variables: { cartId, lineIds },
+  });
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to remove from cart");
+  }
+
+  if (data?.cartLinesRemove?.userErrors?.length > 0) {
+    throw new Error(data.cartLinesRemove.userErrors[0].message);
+  }
+
+  return data?.cartLinesRemove?.cart;
+}
+
+// Search products
+export async function searchProducts(
+  query: string,
+  first: number = 20
+): Promise<ShopifyProduct[]> {
+  const searchQuery = `
+    ${PRODUCT_FRAGMENT}
+    query SearchProducts($query: String!, $first: Int!) {
+      search(query: $query, first: $first, types: [PRODUCT]) {
+        nodes {
+          ... on Product {
+            ...ProductFields
+          }
+        }
+      }
+    }
+  `;
+
+  const { data, errors } = await shopifyClient.request(searchQuery, {
+    variables: { query, first },
+  });
+
+  if (errors) {
+    throw new Error(errors.message || "Failed to search products");
+  }
+
+  return data?.search?.nodes || [];
+}

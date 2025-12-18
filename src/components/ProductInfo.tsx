@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useCart } from "@/context/CartContext";
+
+interface Variant {
+  id: string;
+  title: string;
+  availableForSale: boolean;
+}
 
 interface ProductInfoProps {
   title: string;
@@ -11,8 +18,8 @@ interface ProductInfoProps {
   discountPercentage?: number;
   description: string;
   sizes?: string[];
-  onBuyNow?: () => void;
-  onAddToCart?: () => void;
+  variants?: Variant[];
+  checkoutUrl?: string;
 }
 
 export default function ProductInfo({
@@ -24,12 +31,33 @@ export default function ProductInfo({
   discountPercentage,
   description,
   sizes = [],
-  onBuyNow,
-  onAddToCart,
+  variants = [],
+  checkoutUrl,
 }: ProductInfoProps) {
   const [selectedSize, setSelectedSize] = useState(sizes[0] || "");
   const [quantity, setQuantity] = useState(1);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const { addToCart, isLoading } = useCart();
+
+  // Find the selected variant based on size
+  const selectedVariant = variants.find((v) =>
+    v.title === selectedSize || v.title === "Default Title"
+  ) || variants[0];
+
+  const handleAddToCart = async () => {
+    if (selectedVariant) {
+      await addToCart(selectedVariant.id, quantity);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (selectedVariant) {
+      await addToCart(selectedVariant.id, quantity);
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      }
+    }
+  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -145,16 +173,18 @@ export default function ProductInfo({
       {/* Action Buttons */}
       <div className="flex gap-4">
         <button
-          onClick={onBuyNow}
-          className="flex-1 bg-accent text-white py-3 px-6 text-sm tracking-wider hover:bg-accent-light transition-colors"
+          onClick={handleBuyNow}
+          disabled={isLoading || !selectedVariant?.availableForSale}
+          className="flex-1 bg-accent text-white py-3 px-6 text-sm tracking-wider hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          BUY NOW
+          {isLoading ? "PROCESSING..." : "BUY NOW"}
         </button>
         <button
-          onClick={onAddToCart}
-          className="flex-1 border border-foreground text-foreground py-3 px-6 text-sm tracking-wider hover:bg-foreground hover:text-white transition-colors"
+          onClick={handleAddToCart}
+          disabled={isLoading || !selectedVariant?.availableForSale}
+          className="flex-1 border border-foreground text-foreground py-3 px-6 text-sm tracking-wider hover:bg-foreground hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          ADD TO CART
+          {isLoading ? "ADDING..." : selectedVariant?.availableForSale ? "ADD TO CART" : "OUT OF STOCK"}
         </button>
       </div>
 
