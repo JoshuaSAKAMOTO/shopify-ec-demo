@@ -60,12 +60,15 @@ export interface ShopifyProduct {
   tags: string[];
 }
 
-export interface ShopifyCollection {
+export interface ShopifyCollectionListItem {
   id: string;
   handle: string;
   title: string;
   description: string;
   image: ShopifyImage | null;
+}
+
+export interface ShopifyCollection extends ShopifyCollectionListItem {
   products: {
     nodes: ShopifyProduct[];
   };
@@ -207,7 +210,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
 }
 
 // Get all collections
-export async function getCollections(first: number = 10) {
+export async function getCollections(first: number = 10): Promise<ShopifyCollectionListItem[]> {
   const query = `
     query GetCollections($first: Int!) {
       collections(first: $first) {
@@ -239,7 +242,7 @@ export async function getCollections(first: number = 10) {
 }
 
 // Get collection by handle with products
-export async function getCollectionByHandle(handle: string, productCount: number = 20) {
+export async function getCollectionByHandle(handle: string, productCount: number = 20): Promise<ShopifyCollection | null> {
   const query = `
     ${PRODUCT_FRAGMENT}
     query GetCollectionByHandle($handle: String!, $productCount: Int!) {
