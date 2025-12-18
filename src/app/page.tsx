@@ -4,9 +4,10 @@ import CategorySlider from "@/components/CategorySlider";
 import NewArrivals from "@/components/NewArrivals";
 import FeatureSection from "@/components/FeatureSection";
 import Footer from "@/components/Footer";
+import { getProducts, getCollections, formatPrice } from "@/lib/shopify";
 
-// Placeholder data - replace with Shopify data later
-const categories = [
+// Placeholder categories - will be replaced with collections when available
+const defaultCategories = [
   {
     name: "CRYSTALS",
     href: "/collections/crystals",
@@ -29,52 +30,32 @@ const categories = [
   },
 ];
 
-const newArrivalsProducts = [
-  {
-    id: "1",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-1",
-  },
-  {
-    id: "2",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-2",
-  },
-  {
-    id: "3",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-3",
-  },
-  {
-    id: "4",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-4",
-  },
-  {
-    id: "5",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1602192509154-0b900ee1f851?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-5",
-  },
-  {
-    id: "6",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-6",
-  },
-];
+export default async function Home() {
+  // Fetch real products from Shopify
+  const products = await getProducts(6);
+  const collections = await getCollections(4);
 
-export default function Home() {
+  // Transform products for NewArrivals component
+  const newArrivalsProducts = products.map((product) => ({
+    id: product.id,
+    title: product.title,
+    price: formatPrice(product.priceRange.minVariantPrice),
+    image: product.featuredImage?.url || "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=500&h=500&fit=crop",
+    href: `/products/${product.handle}`,
+  }));
+
+  // Transform collections for CategorySlider component
+  const categories = collections.length > 0
+    ? collections.map((collection) => ({
+        name: collection.title.toUpperCase(),
+        href: `/collections/${collection.handle}`,
+        image: collection.image?.url || "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=600&h=800&fit=crop",
+      }))
+    : defaultCategories;
+
+  // Get first product for feature section
+  const featuredProduct = products[0];
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -98,23 +79,25 @@ export default function Home() {
           categories={categories}
         />
 
-        {/* New Arrivals */}
+        {/* New Arrivals - Real Products */}
         <NewArrivals
           title="New Arrivals"
           products={newArrivalsProducts}
-          viewMoreLink="/collections/new-arrivals"
+          viewMoreLink="/collections/all"
         />
 
         {/* Feature Section 1 */}
-        <FeatureSection
-          title="AMETHYST"
-          description="Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt"
-          buttonText="Shop Amethyst"
-          buttonLink="/collections/amethyst"
-          imageSrc="https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=800&h=800&fit=crop"
-          imageAlt="Amethyst crystal"
-          imagePosition="left"
-        />
+        {featuredProduct && (
+          <FeatureSection
+            title={featuredProduct.title.toUpperCase()}
+            description={featuredProduct.description || "Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt"}
+            buttonText={`Shop ${featuredProduct.title}`}
+            buttonLink={`/products/${featuredProduct.handle}`}
+            imageSrc={featuredProduct.featuredImage?.url || "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=800&h=800&fit=crop"}
+            imageAlt={featuredProduct.title}
+            imagePosition="left"
+          />
+        )}
 
         {/* Feature Section 2 */}
         <FeatureSection

@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -5,70 +6,14 @@ import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
 import ProductTabs from "@/components/ProductTabs";
 import RelatedProducts from "@/components/RelatedProducts";
+import { getProductByHandle, getProducts, formatPrice } from "@/lib/shopify";
 
-// Placeholder data - replace with Shopify data later
-const productData = {
-  title: "Amethyst Bunny Figurine",
-  rating: 4.5,
-  reviewCount: 86,
-  price: "₹19,795",
-  compareAtPrice: "M.R.P.₹20,795",
-  discountPercentage: 10,
-  description:
-    "Invite A Sense Of Calm And Charm Into Your Space With Our Amethyst Bunny Figurine – A Delicate Blend Of Nature's Beauty And Artisanal Craftsmanship ...",
-  sizes: ["2-4 Inches", "4-6 Inches", "6-8 Inches", "8-10 Inches"],
-  images: [
-    {
-      src: "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=600&h=600&fit=crop",
-      alt: "Amethyst Bunny Figurine - Main",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1599148401005-fe6d7497cb5e?w=600&h=600&fit=crop",
-      alt: "Amethyst Bunny Figurine - Angle 2",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&h=600&fit=crop",
-      alt: "Amethyst Bunny Figurine - Angle 3",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1602934445884-da0fa1c9d3b3?w=600&h=600&fit=crop",
-      alt: "Amethyst Bunny Figurine - Video",
-    },
-  ],
-};
-
-const tabs = [
+// Default tabs for product information
+const defaultTabs = [
   {
-    id: "healing-crystals",
-    label: "Healing With Crystals",
-    content: [
-      {
-        title: "Physical Problems And Diseases",
-        description:
-          "Alzheimer's, Anorexia, Bruises, Bulimia, Burns, Dementia, Emphysema, Fatigue, Infertility, Kidneys, Lungs, Menstrual, Migraines, Pain, Shingles, And Several Skin Related Diseases.",
-      },
-      {
-        title: "Emotional Concerns And Conditions",
-        description:
-          "Acceptance, Aggression, Anger, Care Of Self, Comfort, Conflicts, Crisis, Crying, Depression, Despair, Emotional Balance, Emotional Blockages, Healing, Release, And The Trauma, Forgiveness, Frustration, Gentleness, Grief, Guilt, Happiness, Hurt Feelings, Jealousy, Joy, Kindness, Loneliness, Love, Nurture, Perseverance, Positive Energy, Rage, Removes Negativity, Self Confidence, Self Esteem, Stress/Tension, And The Tranquility",
-      },
-      {
-        title: "Physical Problems And Diseases",
-        description:
-          "Alzheimer's, Anorexia, Bruises, Bulimia, Burns, Dementia, Emphysema, Fatigue, Infertility, Kidneys, Lungs, Menstrual, Migraines, Pain, Shingles, And Several Skin Related Diseases.",
-      },
-    ],
-  },
-  {
-    id: "healing-vastu",
-    label: "Healing With Vastu",
-    content: [
-      {
-        title: "Vastu Benefits",
-        description:
-          "Place this crystal in the northeast corner of your home or office for maximum positive energy flow and spiritual enhancement.",
-      },
-    ],
+    id: "description",
+    label: "Description",
+    content: [] as { title: string; description: string }[],
   },
   {
     id: "how-to-use",
@@ -94,46 +39,79 @@ const tabs = [
   },
 ];
 
-const relatedProducts = [
-  {
-    id: "r1",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-1",
-  },
-  {
-    id: "r2",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1599148401005-fe6d7497cb5e?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-2",
-  },
-  {
-    id: "r3",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-3",
-  },
-  {
-    id: "r4",
-    title: "Shunya Seated Meditation Set",
-    price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1602934445884-da0fa1c9d3b3?w=500&h=500&fit=crop",
-    href: "/products/shunya-meditation-set-4",
-  },
-];
+interface PageProps {
+  params: Promise<{ handle: string }>;
+}
 
-const breadcrumbItems = [
-  { label: "HOME", href: "/" },
-  { label: "CRYSTALS", href: "/collections/crystals" },
-  { label: "ROCK CRYSTAL", href: "/collections/rock-crystal" },
-  { label: "AMETHYST", href: "/collections/amethyst" },
-  { label: "AMETHYST BUNNY FIGURINE" },
-];
+export default async function ProductPage({ params }: PageProps) {
+  const { handle } = await params;
 
-export default function ProductPage() {
+  // Fetch product data from Shopify
+  const product = await getProductByHandle(handle);
+
+  if (!product) {
+    notFound();
+  }
+
+  // Fetch related products (other products excluding current one)
+  const allProducts = await getProducts(5);
+  const relatedProducts = allProducts
+    .filter((p) => p.id !== product.id)
+    .slice(0, 4)
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      price: formatPrice(p.priceRange.minVariantPrice),
+      image: p.featuredImage?.url || "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=500&h=500&fit=crop",
+      href: `/products/${p.handle}`,
+    }));
+
+  // Transform product images for gallery
+  const productImages = product.images.nodes.length > 0
+    ? product.images.nodes.map((img) => ({
+        src: img.url,
+        alt: img.altText || product.title,
+      }))
+    : [
+        {
+          src: product.featuredImage?.url || "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=600&h=600&fit=crop",
+          alt: product.title,
+        },
+      ];
+
+  // Extract size options if available
+  const sizeOption = product.options.find(
+    (opt) => opt.name.toLowerCase() === "size" || opt.name.toLowerCase() === "サイズ"
+  );
+  const sizes = sizeOption?.values || [];
+
+  // Calculate discount percentage
+  const currentPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+  const compareAtPrice = parseFloat(product.compareAtPriceRange.minVariantPrice.amount);
+  const discountPercentage = compareAtPrice > currentPrice
+    ? Math.round(((compareAtPrice - currentPrice) / compareAtPrice) * 100)
+    : 0;
+
+  // Build breadcrumb from product tags or use default
+  const breadcrumbItems = [
+    { label: "HOME", href: "/" },
+    { label: "PRODUCTS", href: "/collections/all" },
+    { label: product.title.toUpperCase() },
+  ];
+
+  // Build tabs with product description
+  const tabs = [...defaultTabs];
+  if (product.description) {
+    tabs[0] = {
+      ...tabs[0],
+      content: [
+        {
+          title: "About This Product",
+          description: product.description,
+        },
+      ],
+    };
+  }
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -149,21 +127,21 @@ export default function ProductPage() {
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Gallery */}
             <div className="w-full overflow-hidden">
-              <ProductGallery images={productData.images} />
+              <ProductGallery images={productImages} />
             </div>
 
             {/* Product Info */}
             <div className="w-full">
               <ProductInfo
-              title={productData.title}
-              rating={productData.rating}
-              reviewCount={productData.reviewCount}
-              price={productData.price}
-              compareAtPrice={productData.compareAtPrice}
-              discountPercentage={productData.discountPercentage}
-              description={productData.description}
-              sizes={productData.sizes}
-            />
+                title={product.title}
+                rating={4.5}
+                reviewCount={0}
+                price={formatPrice(product.priceRange.minVariantPrice)}
+                compareAtPrice={compareAtPrice > currentPrice ? formatPrice(product.compareAtPriceRange.minVariantPrice) : undefined}
+                discountPercentage={discountPercentage}
+                description={product.description || ""}
+                sizes={sizes}
+              />
             </div>
           </div>
         </div>
