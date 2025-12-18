@@ -27,11 +27,11 @@ const productData = {
       alt: "Amethyst Bunny Figurine - Angle 2",
     },
     {
-      src: "https://images.unsplash.com/photo-1615486511262-6b8e1e8f1c51?w=600&h=600&fit=crop",
+      src: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&h=600&fit=crop",
       alt: "Amethyst Bunny Figurine - Angle 3",
     },
     {
-      src: "https://images.unsplash.com/photo-1615486364523-e71749e46123?w=600&h=600&fit=crop",
+      src: "https://images.unsplash.com/photo-1602934445884-da0fa1c9d3b3?w=600&h=600&fit=crop",
       alt: "Amethyst Bunny Figurine - Video",
     },
   ],
@@ -113,14 +113,14 @@ const relatedProducts = [
     id: "r3",
     title: "Shunya Seated Meditation Set",
     price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1615486511262-6b8e1e8f1c51?w=500&h=500&fit=crop",
+    image: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=500&h=500&fit=crop",
     href: "/products/shunya-meditation-set-3",
   },
   {
     id: "r4",
     title: "Shunya Seated Meditation Set",
     price: "Rs. 7,900",
-    image: "https://images.unsplash.com/photo-1615486364523-e71749e46123?w=500&h=500&fit=crop",
+    image: "https://images.unsplash.com/photo-1602934445884-da0fa1c9d3b3?w=500&h=500&fit=crop",
     href: "/products/shunya-meditation-set-4",
   },
 ];
@@ -146,12 +146,15 @@ export default function ProductPage() {
 
         {/* Product Section */}
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Gallery */}
-            <ProductGallery images={productData.images} />
+            <div className="w-full overflow-hidden">
+              <ProductGallery images={productData.images} />
+            </div>
 
             {/* Product Info */}
-            <ProductInfo
+            <div className="w-full">
+              <ProductInfo
               title={productData.title}
               rating={productData.rating}
               reviewCount={productData.reviewCount}
@@ -161,6 +164,7 @@ export default function ProductPage() {
               description={productData.description}
               sizes={productData.sizes}
             />
+            </div>
           </div>
         </div>
 
